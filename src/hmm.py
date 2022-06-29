@@ -4,6 +4,7 @@ import pandas as pd
 
 import itertools
 import random
+from tqdm import tqdm
 
 
 class HiddenMarkovModel:
@@ -376,7 +377,7 @@ class HiddenMarkovModel:
         # N = len(X)
         # print("shape of X", len(X), len(X[0]))
 
-        for n_iter in range(N_iters):
+        for n_iter in tqdm(range(N_iters)):
             # print('iteration', n_iter)
 
             # Make temporary arrays to hold A and O values.

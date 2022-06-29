@@ -6,7 +6,7 @@ from hmm import unsupervised_HMM
 import itertools
 import random
 
-df = pd.read_csv('notebooks/team_data.csv')
+df = pd.read_csv('../notebooks/team_data.csv')
 
 map_letter = 'A'
 
@@ -176,7 +176,7 @@ for team_no in team_to_state_id_sequence:
         counter += 1
 
 hmm_input_X = np.array(hmm_input_X)
-
+print("****** HMM input: ******", hmm_input_X)
 N_iters = 100
 n_states = 5
 
