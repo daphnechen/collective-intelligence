@@ -10,6 +10,10 @@ import os
 from pprint import pprint
 import json
 
+from multiprocessing import Pool
+
+from sklearn.cluster import KMeans
+
 # df = pd.read_csv('../data/50_salads_data_test.csv')
 df = pd.read_csv('new_data.csv')
 
@@ -82,7 +86,7 @@ for seq in synthetic_data:
 
 pprint(hmm_input_X)
 hmm_input_X = np.array(hmm_input_X)
-np.save('salad_data_synthetic.npy', hmm_input_X)
+# np.save('salad_data_synthetic.npy', hmm_input_X)
 # print("INPUT to HMM: \n", hmm_input_X)
 print("num sequences: \n", len(hmm_input_X))
 
@@ -98,23 +102,64 @@ unique = sorted(unique)
 
 #####
 
+def visualize_sparsities(hmm, O_max_cols=50, O_vmax=0.1):
+    plt.close('all')
+    plt.set_cmap('viridis')
+
+    # Visualize sparsity of A.
+    plt.imshow(hmm.A, vmax=1.0)
+    plt.colorbar()
+    plt.title('Sparsity of A matrix')
+    plt.show()
+
+    # Visualize sparsity of O.
+    plt.imshow(np.array(hmm.O)[:, :O_max_cols], vmax=O_vmax, aspect='auto')
+    plt.colorbar()
+    plt.title('Sparsity of O matrix')
+    plt.show()
+
+#####
+
 N_iters = 100
-n_states = 20
+n_states = 5
 
 ## Run this to generate HMM
-test_unsuper_hmm = unsupervised_HMM(hmm_input_X, n_states, N_iters)
-print('emission', test_unsuper_hmm.generate_emission(30))  # emission of length 30
+salad_unsuper_hmm = unsupervised_HMM(hmm_input_X, n_states, N_iters)
+print('emission', salad_unsuper_hmm.generate_emission(30))  # emission of length 30
+
+A = salad_unsuper_hmm.A
+O = salad_unsuper_hmm.O
+visualize_sparsities(A, O)
+
+# with Pool(4) as p:
+#     salad_unsuper_hmm = p.map(unsupervised_HMM, )
 
 # -------
-
-# hidden_seqs = {}
-# team_num_to_seq_probs = {}
-# for j in range(len(hmm_input_X)):
-#     # print("team", team_numbers[j])
-#     # print("reindex", X[j][:50])
-#     team_id_map = index_to_team_map[j]
-#     viterbi_output, all_sequences_and_probs = test_unsuper_hmm.viterbi_all_probs(hmm_input_X[j])
-#     team_num_to_seq_probs[team_id_map] = all_sequences_and_probs
-#     hidden_seqs[team_id_map] = [int(x) for x in viterbi_output]
+index_to_team_map = {}
 
 
+# get hidden states
+hidden_seqs = {}
+team_num_to_seq_probs = {}
+for j in range(len(hmm_input_X)):
+    # print("team", team_numbers[j])
+    # print("reindex", X[j][:50])
+    team_id_map = index_to_team_map[j]
+    viterbi_output, all_sequences_and_probs = salad_unsuper_hmm.viterbi_all_probs(hmm_input_X[j])
+    team_num_to_seq_probs[team_id_map] = all_sequences_and_probs
+    hidden_seqs[team_id_map] = [int(x) for x in viterbi_output]
+
+
+# run clustering
+def get_clusters(hidden_states):
+    features =  # TODO
+    kmeans = KMeans(n_clusters=10).fit(features)
+
+    cluster_labels = kmeans.labels_
+    cluster_means = kmeans.cluster_centers_
+
+    return cluster_labels, cluster_means
+
+labels, means = get_clusters()
+print(labels)
+print(means)

@@ -6,6 +6,8 @@ import itertools
 import random
 from tqdm import tqdm
 
+from multiprocessing import Pool
+
 
 class HiddenMarkovModel:
     '''
@@ -633,6 +635,9 @@ def unsupervised_HMM(X, n_states, N_iters):
     # Train an HMM with unlabeled data.
     HMM = HiddenMarkovModel(A, O)
     HMM.unsupervised_learning(X, N_iters)
+
+    # pool = Pool()
+    # pool.map(HMM.unsupervised_learning, )
 
     return HMM
 
