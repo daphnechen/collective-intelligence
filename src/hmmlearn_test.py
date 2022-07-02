@@ -25,35 +25,55 @@ for i in range(len(data)):
     lengths.append(len(data[i][0]))
 
 # train an HMM and get the hidden states
-model = hmm.GaussianHMM(n_components=10, n_iter=100)  # TODO change number of N
+model = hmm.GaussianHMM(n_components=50, n_iter=100)  # TODO change number of N
 model.fit(np.concatenate(formatted_data).reshape(-1, 1), lengths=lengths)
 hidden_states = [model.predict(np.array(element).reshape(-1, 1)) for element in formatted_data]
 print(len(hidden_states), 'hidden states length')
 print('HIDDEN STATES: \n', hidden_states)
 
 
-def get_clusters(hidden_seqs):
+def get_clusters(k, hidden_seqs):
     '''
-        Get kmeans clusters
+        Helper method to get kmeans clusters
         Only works for sequences of equal length
+
+        Args:
+            k: number of clusters for k-means
+            hidden_seqs: an NxH array of hidden state sequences, where
+                N is the number of sequences and
+                H is the number of hidden states in the sequence
+
+        Returns:
+            cluster_labels: the labels of the k clusters
+            cluster_means: the coordinates of cluster centers
     '''
     features = []
     if type(hidden_seqs) is list:
         features = np.reshape(hidden_seqs, (-1, 1))
     else:
         features =  hidden_seqs.reshape(-1, 1)
-    print(len(features), 'features length')
-    kmeans = KMeans(n_clusters=10).fit(features)
+    # print(len(features), 'features length')
+    kmeans = KMeans(n_clusters=k).fit(features)
     cluster_labels = kmeans.labels_
     cluster_means = kmeans.cluster_centers_
 
     return cluster_labels, cluster_means
 
 
-def get_clusters_as_ngrams(hidden_seqs):
+def get_clusters_as_ngrams(k, hidden_seqs):
     '''
-        Get kmeans clusters
+        Helper method to get kmeans clusters
         Account for sequences of different length
+
+        Args:
+            k: number of clusters for k-means
+            hidden_seqs: an Nx*H array of hidden state sequences, where
+                N is the number of sequences and
+                *H is a variable-length for number of hidden states in the sequence
+
+        Returns:
+            cluster_labels: the labels of the k clusters
+            cluster_means: the coordinates of cluster centers
     '''
     vocabulary = list()
     for element in hidden_seqs:
@@ -64,7 +84,7 @@ def get_clusters_as_ngrams(hidden_seqs):
     matrix = vectorizer.fit_transform(vocabulary)
     matrix.toarray()
 
-    kmeans = KMeans(n_clusters=10, random_state=0).fit(matrix)
+    kmeans = KMeans(n_clusters=k, random_state=0).fit(matrix)
     cluster_labels = kmeans.labels_
     cluster_means = kmeans.cluster_centers_
 
@@ -72,7 +92,7 @@ def get_clusters_as_ngrams(hidden_seqs):
 
 
 # run clustering
-labels, means = get_clusters_as_ngrams(hidden_states)
+labels, means = get_clusters_as_ngrams(10, hidden_states)
 print('labels: \n', labels)
 print('means: \n', means)
 
@@ -93,6 +113,7 @@ print('means: \n', means)
 ## visualize the clusters
 # plt.scatter(range(len(hidden_states)), hidden_states, label="50 salads synthetic data", c=labels, cmap='rainbow')
 
+# plot just the first 5 sequences to minimize clutter
 fig, ax = plt.subplots()
 n = len(hidden_states)-535
 color = iter(cm.rainbow(np.linspace(0, 1, n)))
