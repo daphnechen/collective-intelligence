@@ -12,6 +12,8 @@ from nltk import ngrams
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 
+import json
+
 
 # load the data
 data = np.load('salad_data_synthetic.npy', allow_pickle=True)
@@ -128,3 +130,36 @@ ax.set_xlabel('step in sequence')
 ax.set_ylabel('hidden state #')
 fig.show()
 plt.show()
+# TODO save fig
+
+
+# create the support sets // this should probably be in a separate file
+
+hs_map = {} # mapping between "label/cluster : (index, hidden state sequence)""
+for i in range(len(labels)):
+    value = (i, hidden_states[i].tolist())
+    if str(labels[i]) in hs_map.keys(): # key exists
+        hs_map[str(labels[i])].append(value)
+    else: # key does not exist; create it
+        hs_map[str(labels[i])] = [value]
+
+with open('hs_map.json', 'w') as f:
+    json.dump(hs_map, f, ensure_ascii=False, sort_keys=True, indent=4)
+print('THIS IS THE MAPPING \n', hs_map)
+# print(json.dumps(hs_map, sort_keys=True, indent=4))
+
+# use index to get corresponding value in formatted_data
+support_sets = {}
+for i, (label, values) in enumerate(hs_map.items()):
+    for element in values:
+        idx, _ = element
+        
+        if str(label) in support_sets.keys():
+            support_sets[str(label)].append(formatted_data[idx])
+        else:
+            support_sets[str(label)] = [formatted_data[idx]]
+
+with open('support_sets.json', 'w') as f:
+    json.dump(support_sets, f, ensure_ascii=False, sort_keys=True, indent=4)
+print('THESE ARE THE SUPPORT SETS \n', support_sets)
+# print(json.dumps(support_sets, sort_keys=True, indent=4))
